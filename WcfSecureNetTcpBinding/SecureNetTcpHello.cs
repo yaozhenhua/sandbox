@@ -5,6 +5,9 @@
  *      
  * To allow non-Administrator running the program, go to "Manage computer certificates", "Personal", "certificates"
  * folder, right click "localhost" and click "Manage private keys", add "Users" group so regular user can read.
+ * 
+ * Note that the certificate needs to be added in "Trusted Root Certification Authorities" in the local computer.
+ * Otherwise the cert is not trusted and thus cannot be used.
  */
 
 namespace Microsoft.Test
