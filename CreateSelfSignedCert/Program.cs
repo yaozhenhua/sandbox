@@ -45,21 +45,21 @@
 
         private static void InstallCertificate(X509Certificate2 cert)
         {
-            using var store = new X509Store(StoreName.My, StoreLocation.LocalMachine);
+            using var store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
             store.Open(OpenFlags.ReadWrite);
             store.Add(cert);
         }
 
         private static void AddCertificateToTrustedRoot(X509Certificate2 cert)
         {
-            using var store = new X509Store(StoreName.Root, StoreLocation.LocalMachine);
+            using var store = new X509Store(StoreName.Root, StoreLocation.CurrentUser);
             store.Open(OpenFlags.ReadWrite);
             store.Add(cert);
         }
 
         private static void DeleteCertificate(X509Certificate2 cert)
         {
-            using (var store = new X509Store(StoreName.My, StoreLocation.LocalMachine))
+            using (var store = new X509Store(StoreName.My, StoreLocation.CurrentUser))
             {
                 store.Open(OpenFlags.ReadWrite);
                 var matchingCerts = store.Certificates.Find(X509FindType.FindByThumbprint, cert.Thumbprint, false);
@@ -69,7 +69,7 @@
                 }
             }
 
-            using (var store = new X509Store(StoreName.Root, StoreLocation.LocalMachine))
+            using (var store = new X509Store(StoreName.Root, StoreLocation.CurrentUser))
             {
                 store.Open(OpenFlags.ReadWrite);
                 var matchingCerts = store.Certificates.Find(X509FindType.FindByThumbprint, cert.Thumbprint, false);

@@ -8,6 +8,8 @@
  * 
  * Note that the certificate needs to be added in "Trusted Root Certification Authorities" in the local computer.
  * Otherwise the cert is not trusted and thus cannot be used.
+ *
+ * Update: the certificate can be changed from LocalMachine to CurrentUser then no administrator privilege is required.
  */
 
 namespace Microsoft.Test
@@ -63,10 +65,21 @@ namespace Microsoft.Test
             // Create the service host
             using var host = new ServiceHost(typeof(CalculatorService));
             host.Credentials.ServiceCertificate.SetCertificate(
-                StoreLocation.LocalMachine,
+                StoreLocation.CurrentUser,
                 StoreName.My,
                 X509FindType.FindBySubjectName,
                 CertSubjectName);
+
+            // Optional: single instance concurrency mode.
+            var behavior = host.Description.Behaviors.Find<ServiceBehaviorAttribute>();
+            if (behavior == null)
+            {
+                behavior = new ServiceBehaviorAttribute();
+                host.Description.Behaviors.Add(behavior);
+            }
+
+            behavior.InstanceContextMode = InstanceContextMode.Single;
+            behavior.ConcurrencyMode = ConcurrencyMode.Multiple;
 
             var addr = new EndpointAddress($"net.tcp://{ServiceHostName}:{ServicePort}/CalculatorService");
 
@@ -88,7 +101,7 @@ namespace Microsoft.Test
             // Create a WCF client to confirm the service is working.
             using var client = new CalculatorClient(GetSecureNetTcpBinding(), addr);
             client.ClientCredentials.ClientCertificate.SetCertificate(
-                StoreLocation.LocalMachine,
+                StoreLocation.CurrentUser,
                 StoreName.My,
                 X509FindType.FindBySubjectName,
                 CertSubjectName);
@@ -103,9 +116,34 @@ namespace Microsoft.Test
             {
                 Console.WriteLine($"An exception occurred: {ex}");
             }
+            finally
+            {
+                // Close the client
+                client.Close();
+            }
 
-            // Close the client
-            client.Close();
+            // Optional: use ChannelFactory to create the client object and invoke the service.
+            using var factory = new ChannelFactory<ICalculatorService>(GetSecureNetTcpBinding(), addr);
+            factory.Credentials.ClientCertificate.SetCertificate(
+                StoreLocation.CurrentUser,
+                StoreName.My,
+                X509FindType.FindBySubjectName,
+                CertSubjectName);
+            var channel = factory.CreateChannel();
+            try
+            {
+                int result = channel.Add(15, 23);
+                Console.WriteLine($"The result of adding 15 and 23 is: {result}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An exception occurred: {ex}");
+            }
+            finally
+            {
+                ((IDisposable)channel).Dispose();
+                factory.Close();
+            }
 
             Console.WriteLine("Press <Enter> to stop the service.");
             Console.ReadLine();
