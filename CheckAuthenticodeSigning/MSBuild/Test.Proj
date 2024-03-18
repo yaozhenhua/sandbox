@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <UsingTask TaskName="GetSignedFiles" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll" >
+    <ParameterGroup>
+      <Input ParameterType="Microsoft.Build.Framework.ITaskItem[]" Required="true" />
+      <Output ParameterType="Microsoft.Build.Framework.ITaskItem[]" Output="true" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System" />
+      <Using Namespace="System.Collections.Generic" />
+      <Using Namespace="System.Security.Cryptography.X509Certificates" />
+      <Using Namespace="Microsoft.Build.Framework" />
+      <Code Type="Fragment" Language="cs">
+<![CDATA[
+  var resultList = new List<TaskItem>();
+  foreach (var item in Input) {
+      var path = item.GetMetadata("FullPath");
+      try {
+          var cert = X509Certificate.CreateFromSignedFile(path);
+          Log.LogMessage(MessageImportance.Normal, string.Format("Signed {0} -> {1}", path, cert.Subject));
+          resultList.Add(new TaskItem(item.ItemSpec));
+      }
+      catch (Exception) {
+          Log.LogMessage(MessageImportance.Normal, string.Format("Not signed {0}", path));
+      }
+  }
+  Output = resultList.ToArray();
+]]>
+      </Code>
+    </Task>
+  </UsingTask>
+
+  <Target Name="Build">
+    <ItemGroup>
+      <Files Include="../bin/Debug/net462/*.*" />
+      <Files Include="z:/psping.exe" />
+    </ItemGroup>
+
+    <GetSignedFiles Input="@(Files)">
+      <Output TaskParameter="Output" ItemName="SignedFiles" />
+    </GetSignedFiles>
+
+    <Message Text="Signed files: @(SignedFiles)" />
+
+    <ItemGroup>
+      <FinalFiles Include="@(Files)" Exclude="@(SignedFiles)" />
+    </ItemGroup>
+
+    <Message Text="Files To Sign: @(FinalFiles)" />
+  </Target>
+
+</Project>
