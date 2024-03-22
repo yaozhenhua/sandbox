@@ -1,6 +1,7 @@
 ﻿namespace Microsoft.Test
 {
     using System;
+    using System.Runtime.InteropServices;
     using System.Security.Cryptography;
     using System.Security.Cryptography.X509Certificates;
 
@@ -14,6 +15,9 @@
             {
                 // Create a self-signed certificate
                 var cert = CreateSelfSignedCertificate();
+
+                // Disposing the cert will corrupt it. This will prevent the Dispose() method from kicking in.
+                GCHandle.Alloc(cert, GCHandleType.Normal);
 
                 // Install the certificate in the local computer personal store
                 InstallCertificate(cert);
@@ -37,8 +41,26 @@
             using var rsa = RSA.Create(2048);
             var request = new CertificateRequest($"CN={CertSubjectName}", rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
 
-            // available in .NET 8, not in net472.
-            ////request.CertificateExtensions.Add(new X509SubjectAlternativeNameExtension(new[] { "localhost", "127.0.0.1" }));
+            // Add Key Usages.
+            request.CertificateExtensions.Add(new X509KeyUsageExtension(
+                    X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.KeyEncipherment,
+                    false));
+
+            // Add Enhanced Key Usages.
+            request.CertificateExtensions.Add(new X509EnhancedKeyUsageExtension(
+                new OidCollection
+                {
+                        new Oid("1.3.6.1.5.5.7.3.1"), // server authentication
+                        new Oid("1.3.6.1.5.5.7.3.2"), // client authentication
+                },
+                false));
+
+            // Add list of Subject Alternative Names.
+            var san = new SubjectAlternativeNameBuilder();
+            san.AddIpAddress(System.Net.IPAddress.Loopback);
+            san.AddDnsName("localhost");
+            request.CertificateExtensions.Add(san.Build());
+
             var cert = request.CreateSelfSigned(DateTimeOffset.Now, DateTimeOffset.Now.AddYears(1));
             return new X509Certificate2(cert.Export(X509ContentType.Pfx));
         }
