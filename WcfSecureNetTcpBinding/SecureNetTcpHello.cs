@@ -55,7 +55,7 @@ namespace Microsoft.Test
     public sealed class SecureNetTcpHello
     {
         private const string CertSubjectName = "localhost";
-        private const string ServiceHostName = "localhost";
+        private const string ServiceHostName = "127.0.0.1";
         private const int ServicePort = 8000;
 
         private static void Main()
@@ -81,7 +81,9 @@ namespace Microsoft.Test
             behavior.InstanceContextMode = InstanceContextMode.Single;
             behavior.ConcurrencyMode = ConcurrencyMode.Multiple;
 
-            var addr = new EndpointAddress($"net.tcp://{ServiceHostName}:{ServicePort}/CalculatorService");
+            var addr = new EndpointAddress(
+                new Uri($"net.tcp://{ServiceHostName}:{ServicePort}/CalculatorService"),
+                EndpointIdentity.CreateDnsIdentity(CertSubjectName));
 
             // Define the service endpoint
             ServiceEndpoint endpoint = host.AddServiceEndpoint(
@@ -106,6 +108,10 @@ namespace Microsoft.Test
                 X509FindType.FindBySubjectName,
                 CertSubjectName);
 
+            // Disable the validation if the cert is self-signed and doesn't have a valid chain.
+            client.ChannelFactory.Credentials.ServiceCertificate.Authentication.CertificateValidationMode =
+                    X509CertificateValidationMode.None;
+
             // Call the service
             try
             {
@@ -129,6 +135,11 @@ namespace Microsoft.Test
                 StoreName.My,
                 X509FindType.FindBySubjectName,
                 CertSubjectName);
+
+            // Disable the validation if the cert is self-signed and doesn't have a valid chain.
+            factory.Credentials.ServiceCertificate.Authentication.CertificateValidationMode =
+                    X509CertificateValidationMode.None;
+
             var channel = factory.CreateChannel();
             try
             {

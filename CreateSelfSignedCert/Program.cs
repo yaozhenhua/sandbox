@@ -14,9 +14,9 @@
             try
             {
                 // Create a self-signed certificate
+                // PowerShell equivalent: New-SelfSignedCertificate -Subject "CN=localhost" -CertStoreLocation 'Cert:\CurrentUser\My' -DnsName @('localhost', '127.0.0.1')
                 var cert = CreateSelfSignedCertificate();
 
-                // Disposing the cert will corrupt it. This will prevent the Dispose() method from kicking in.
                 GCHandle.Alloc(cert, GCHandleType.Normal);
 
                 // Install the certificate in the local computer personal store
@@ -25,6 +25,7 @@
                 // Add the certificate to the trusted root certification authorities
                 AddCertificateToTrustedRoot(cert);
 
+                // Disposing the cert will corrupt it after this point.
                 Console.WriteLine("Certificate successfully installed and added to trusted root authorities.");
 
                 // Clean up: delete the certificate from both places
