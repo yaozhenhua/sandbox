@@ -93,6 +93,26 @@ int wmain()
     dnsQueryRequest.InterfaceIndex = 0;
     dnsQueryRequest.pQueryCompletionCallback = QueryCompletionCallback;
 
+    // Specify the DNS server
+    WSADATA wsaData;
+    if (auto error = WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+    {
+        wprintf(L"WSAStartup failed with %d\n", error);
+        return error;
+    }
+
+    SOCKADDR_STORAGE SockAddr;
+    int addrLength;
+
+    addrLength = sizeof(SockAddr);
+    WSAStringToAddress((LPWSTR)L"8.8.8.8", AF_INET, NULL, (LPSOCKADDR)&SockAddr, &addrLength);
+
+    DNS_ADDR_ARRAY dnsServerArray = {};
+    dnsServerArray.AddrCount = 1;
+    dnsServerArray.MaxCount = 1;
+    CopyMemory(&dnsServerArray.AddrArray[0].MaxSa, &SockAddr, DNS_ADDR_MAX_SOCKADDR_LENGTH);
+    dnsQueryRequest.pDnsServerList = &dnsServerArray;
+
     // Create an event for notification
     hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
     if (!hEvent)
