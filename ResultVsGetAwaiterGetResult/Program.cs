@@ -44,7 +44,7 @@ public class AsyncBenchmark
     {
         try
         {
-            return DummyExceptionAsync().Result;
+            return DummyExceptionAsync().GetAwaiter().GetResult();
         }
         catch (Exception)
         {
