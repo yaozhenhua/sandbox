@@ -1,3 +1,8 @@
+---
+name: code-review
+description: Formal code review with structured focus on performance, security, correctness, async patterns, API design, and error handling. Customizable per-repo.
+---
+
 # Code Review Skill
 
 Formal, structured code review with dedicated modules for performance, security, correctness, async/threading, API

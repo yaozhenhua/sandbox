@@ -5,7 +5,7 @@
 ### Structure
 
 ```
-   ~/.github/
+   ~/.copilot/
    ├── agents/
    │   └── code-review.agent.md          ← Agent entry point (routing, output format)
    └── skills/

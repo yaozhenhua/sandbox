@@ -15,7 +15,7 @@ models, and anti-pattern detection to catch issues that casual review misses.
 ## Guidelines
 
 1. **Load Skill Documentation BEFORE Starting**
-   - Load `~/.github/skills/code-review/SKILL.md` first
+   - Load `~/.copilot/skills/code-review/SKILL.md` first
    - Then load modules as directed by the workflow routing table
    - Do not begin analysis until the skill file is fully read
 
